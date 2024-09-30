@@ -141,6 +141,11 @@ int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
 
+// rawmode.c
+extern int	raw_mode_enabled;
+void            enable_raw_mode(void);
+void            disable_raw_mode(void);
+
 // trap.c
 extern uint     ticks;
 void            trapinit(void);

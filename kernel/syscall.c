@@ -102,6 +102,19 @@ extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 
+// Pong syscall prototypes
+extern uint64 sys_nonblock_read(void);
+extern uint64 sys_clear_screen(void);
+extern uint64 sys_gotoxy(void);
+extern uint64 sys_delay(void);
+extern uint64 sys_vga_draw(void);
+extern uint64 sys_cursor_move(void);
+
+// Raw Mode
+extern uint64 sys_enable_raw_mode(void);
+extern uint64 sys_disable_raw_mode(void);
+
+
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
 static uint64 (*syscalls[])(void) = {
@@ -126,6 +139,16 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+
+// Pong syscalls
+[SYS_nonblock_read]    sys_nonblock_read,
+[SYS_clear_screen]     sys_clear_screen,
+[SYS_gotoxy]           sys_gotoxy,
+[SYS_delay]            sys_delay,
+[SYS_vga_draw]         sys_vga_draw,
+[SYS_cursor_move]      sys_cursor_move,
+[SYS_enable_raw_mode]  sys_enable_raw_mode,
+[SYS_disable_raw_mode] sys_disable_raw_mode,
 };
 
 void

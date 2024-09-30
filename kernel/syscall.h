@@ -20,3 +20,15 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+
+// Pong system calls
+#define SYS_nonblock_read 22  // For non-blocking input reading
+#define SYS_clear_screen  23  // For clearing the terminal screen
+#define SYS_gotoxy        24  // For moving the cursor
+#define SYS_delay         25  // For delaying (replacing usleep)
+#define SYS_vga_draw	  26  // For drawing on the VGA terminal
+#define SYS_cursor_move   27  // For moving the cursor (VGA)
+
+// Raw mode
+#define SYS_enable_raw_mode 28
+#define SYS_disable_raw_mode 29
