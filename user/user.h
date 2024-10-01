@@ -1,3 +1,5 @@
+#include "../kernel/syscall.h"
+
 struct stat;
 
 // system calls
@@ -24,29 +26,29 @@ int sleep(int);
 int uptime(void);
 
 // pong.c
-int nonblock_read(void);	// For non-blocking input
-int clear_screen(void);         // Clears the terminal window
-int gotoxy(int x, int y);	// Moves cursor to (x, y)
-int delay(int milliseconds);    // Delays execution for specified milliseconds
-int cursor_move(int x, int y);  // Moves the cursor to (x, y) for VGA
-int enable_raw_mode(void);      // Enables raw input mode
-int disable_raw_mode(void);     // Disables raw input mode
+int nonblock_read(void);
+int clear_screen(void);
+int gotoxy(int x, int y);
+int delay(int milliseconds);
+int cursor_move(int x, int y);
+int enable_raw_mode(void);
+int disable_raw_mode(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
-void *memmove(void*, const void*, int);
+void* memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
 void fprintf(int, const char*, ...);
 void printf(const char*, ...);
 char* gets(char*, int max);
 int fgets(int fd, char*, int max);
-int getline(char **lineptr, uint *n, int fd);
-uint strlen(const char*);
-void* memset(void*, int, uint);
-void* malloc(uint);
+int getline(char **lineptr, unsigned int *n, int fd);
+unsigned int strlen(const char*);
+void* memset(void*, int, unsigned int);
+void* malloc(unsigned int);
 void free(void*);
 int atoi(const char*);
-int memcmp(const void *, const void *, uint);
-void *memcpy(void *, const void *, uint);
+int memcmp(const void *, const void *, unsigned int);
+void* memcpy(void *, const void *, unsigned int);

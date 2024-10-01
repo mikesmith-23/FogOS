@@ -194,6 +194,23 @@ memcpy(void *dst, const void *src, uint n)
 }
 
 // Pong Additions Below
+// Call syscalls from user space
+
+// Generic system call function
+uint64
+syscall(int num, ...)
+{
+    // Variadic argument handling for system call arguments
+    uint64 a0 = 0, a1 = 0, a2 = 0, a3 = 0, a4 = 0, a5 = 0;
+    register uint64 syscall_num asm("a7") = num;
+
+    asm volatile("ecall"
+                 : "=r"(a0)
+                 : "r"(syscall_num), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5)
+                 : "memory");
+
+    return a0;
+}
 
 int
 nonblock_read(void)

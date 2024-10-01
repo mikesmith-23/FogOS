@@ -207,7 +207,7 @@ sys_delay(void)
 uint64
 sys_vga_draw(void)
 {
-  int x, y;
+  int x, y, color;
 
   argint(0, &x);     // Get screen x-coordinate from user space
   argint(1, &y);     // Get screen y-coordinate from user space
