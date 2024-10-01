@@ -137,44 +137,50 @@ consoleintr(int c)
 {
   acquire(&cons.lock);
 
-  switch(c){
-  case C('P'):  // Print process list.
-    procdump();
-    break;
-  case C('U'):  // Kill line.
-    while(cons.e != cons.w &&
-          cons.buf[(cons.e-1) % INPUT_BUF_SIZE] != '\n'){
-      cons.e--;
-      consputc(BACKSPACE);
-    }
-    break;
-  case C('H'): // Backspace
-  case '\x7f': // Delete key
-    if(cons.e != cons.w){
-      cons.e--;
-      consputc(BACKSPACE);
-    }
-    break;
-  default:
-    if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
-      c = (c == '\r') ? '\n' : c;
-
-      // echo back to the user.
-      consputc(c);
-
-      // store for consumption by consoleread().
+  if(raw_mode_enabled){ // In raw mode, handle input immediately w/o line buffering
+    if(c != 0 && cons.e - cons.r < INPUT_BUF_SIZE){
       cons.buf[cons.e++ % INPUT_BUF_SIZE] = c;
-
-      if(c == '\n' || c == C('D') || cons.e-cons.r == INPUT_BUF_SIZE){
-        // wake up consoleread() if a whole line (or end-of-file)
-        // has arrived.
-        cons.w = cons.e;
-        wakeup(&cons.r);
-      }
+      cons.w = cons.e;
+      wakeup(&cons.r);  // Wake up read immediately
     }
-    break;
+  } else { // Default line-buffered behavior
+    switch(c){
+    case C('P'):  // Print process list.
+      procdump();
+      break;
+    case C('U'):  // Kill line.
+      while(cons.e != cons.w &&
+            cons.buf[(cons.e-1) % INPUT_BUF_SIZE] != '\n'){
+        cons.e--;
+        consputc(BACKSPACE);
+      }
+      break;
+    case C('H'): // Backspace
+    case '\x7f': // Delete key
+      if(cons.e != cons.w){
+        cons.e--;
+        consputc(BACKSPACE);
+      }
+      break;
+    default:
+      if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
+        c = (c == '\r') ? '\n' : c;
+
+        // Echo the character to the user
+        consputc(c);
+
+        // Store for consumption by consoleread()
+        cons.buf[cons.e++ % INPUT_BUF_SIZE] = c;
+
+        if(c == '\n' || c == C('D') || cons.e-cons.r == INPUT_BUF_SIZE){
+          cons.w = cons.e;
+          wakeup(&cons.r);  // Wake up read if a full line has arrived
+        }
+      }
+      break;
+    }
   }
-  
+
   release(&cons.lock);
 }
 
