@@ -23,6 +23,15 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
+// pong.c
+int nonblock_read(void);	// For non-blocking input
+int clear_screen(void);         // Clears the terminal window
+int gotoxy(int x, int y);	// Moves cursor to (x, y)
+int delay(int milliseconds);    // Delays execution for specified milliseconds
+int cursor_move(int x, int y);  // Moves the cursor to (x, y) for VGA
+int enable_raw_mode(void);      // Enables raw input mode
+int disable_raw_mode(void);     // Disables raw input mode
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);

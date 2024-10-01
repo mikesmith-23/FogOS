@@ -2,6 +2,7 @@
 #include "kernel/stat.h"
 #include "kernel/fcntl.h"
 #include "user/user.h"
+#include "../kernel/syscall.h"
 
 //
 // wrapper so that it's OK if main() does not call exit().
@@ -190,4 +191,39 @@ void *
 memcpy(void *dst, const void *src, uint n)
 {
   return memmove(dst, src, n);
+}
+
+// Pong Additions Below
+
+int
+nonblock_read(void)
+{
+    return syscall(SYS_nonblock_read);
+}
+
+
+int
+clear_screen(void)
+{
+    return syscall(SYS_clear_screen);
+}
+
+
+int
+gotoxy(int x, int y)
+{
+    return syscall(SYS_gotoxy, x, y);
+}
+
+
+int
+delay(int milliseconds) // (usleep-like functionality)
+{
+    return syscall(SYS_delay, milliseconds);
+}
+
+int
+cursor_move(int x, int y)
+{
+    return syscall(SYS_cursor_move, x, y);
 }

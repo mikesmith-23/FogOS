@@ -36,3 +36,5 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
+entry("enable_raw_mode");
+entry("disable_raw_mode");
