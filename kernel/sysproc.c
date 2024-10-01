@@ -209,10 +209,10 @@ sys_vga_draw(void)
 {
   int x, y;
 
-  argint(0, &x);  // Get screen x-coordinate from user space
-  argint(1, &y);  // Get screen y-coordinate from user space
-
-  vga_draw(x, y);
+  argint(0, &x);     // Get screen x-coordinate from user space
+  argint(1, &y);     // Get screen y-coordinate from user space
+  argint(2, &color); // Get color
+  vga_draw(x, y, color);
 
   return 0;
 }
