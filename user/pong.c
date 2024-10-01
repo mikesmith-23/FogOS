@@ -1,23 +1,23 @@
 #include "user.h"
 #include "kernel/syscall.h"
 
-// Declare the sys call wrappers
+// Declare system call wrappers
 extern int enable_raw_mode();
 extern int disable_raw_mode();
 extern int gotoxy(int x, int y);
 
-#define V 15  // Adjusted height of the game board
-#define H 40  // Adjusted width of the game board
+#define V 15  // Height of the game board
+#define H 40  // Width of the game board
 
 // Function declarations
 void playGame();
 void gameRules();
-int gotoxy(int x, int y);  // Must return int, as per user.h
-void clearScreen();
+void displayMenu();
+int gotoxy(int x, int y);
 void draw(char map[V][H], int score);
 void show(char map[V][H], int score);
 void update(char map[V][H], int paddleStart, int paddleEnd, int py, int px);
-void input(char map[V][H], int *paddleStart, int *paddleEnd, int *px, int *py, int *modx, int *mody, int *score, int *gol);
+void input(char map[V][H], int *paddleStart, int *paddleEnd, int *px, int *py, int *modx, int *mody, int *score, int *gameOver);
 void edge(char map[V][H]);
 void player(char map[V][H], int paddleStart, int paddleEnd);
 void ball(char map[V][H], int py, int px);
@@ -26,19 +26,14 @@ void busy_wait(int milliseconds);
 int getchar_direct();
 int kbhit();
 
-// Game variables
+// Game state variables
 int playerwin = 0;
 
 int main() {
     int choice;
 
     while (1) {
-        printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-        printf("|                     Ping Pong Game                       |");
-        printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-        printf("\n1. Game Rules");
-        printf("\n2. Play Game");
-        printf("\n3. Quit\n");
+        displayMenu();
 
         choice = getchar_direct() - '0';  // Convert char to int
 
@@ -58,125 +53,134 @@ int main() {
     return 0;
 }
 
+// Function to display the main menu
+void displayMenu() {
+    printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+    printf("\n\n");
+    printf("              _______ _______ ______  _______ \n");
+    printf("             |   _   |   _   |   _  \\|   _   |\n");
+    printf("             |.  1   |.  |   |.  |   |.  |___|\n");
+    printf("             |.  ____|.  |   |.  |   |.  |   |\n");
+    printf("             |:  |   |:  1   |:  |   |:  1   |\n");
+    printf("             |::.|   |::.. . |::.|   |::.. . |\n");
+    printf("             `---'   `-------`--- ---`-------'\n");
+    printf("\n\n");
+    printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+    printf("1. Game Rules\n");
+    printf("2. Play Game\n");
+    printf("3. Quit\n");
+}
+
 // Display game rules
 void gameRules() {
-    clearScreen();
+    clear_screen();
     gotoxy(0, 0);
     printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
     printf("|                      Game Rules                          |\n");
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
-    printf("- Use the up and down arrow keys to move your paddle up and down.\n");
-    printf("- The goal is to prevent the ball from passing your paddle on the left.\n");
+    printf("- Use the up and down arrow keys to move your paddle.\n");
+    printf("- Prevent the ball from passing your paddle.\n");
     printf("- The ball will bounce off the right wall.\n");
-    printf("- Every time you hit the ball, you earn 1 point.\n");
+    printf("- Each hit scores 1 point.\n");
     printf("\nPress any key to return to the main menu...\n");
-
-    getchar_direct(); // Wait for user input
+    getchar_direct();
 }
 
+// Main game loop
 void playGame() {
-
-    enable_raw_mode(); // Enable raw mode before game start
+    enable_raw_mode();
 
     char map[V][H];
-    int px = H / 2, py = V / 2; // Ball position
-    int modx = -1, mody = -1;   // Ball direction
-    int paddleStart = V / 2 - 2, paddleEnd = V / 2 + 2; // Player paddle
-    int score = 0;              // Player  score
-    int gol = 0;
+    int px = H / 2, py = V / 2;
+    int modx = -1, mody = -1;
+    int paddleStart = V / 2 - 2, paddleEnd = V / 2 + 2;
+    int score = 0;
+    int gameOver = 0;
 
     while (1) {
-        gol = 0;
-        draw(map, score); // Clear the map and display the score
-        input(map, &paddleStart, &paddleEnd, &px, &py, &modx, &mody, &score, &gol);
-        update(map, paddleStart, paddleEnd, py, px); // Update game state
-        show(map, score); // Show the updated map and score
+        gameOver = 0;
+        draw(map, score);
+        input(map, &paddleStart, &paddleEnd, &px, &py, &modx, &mody, &score, &gameOver);
+        update(map, paddleStart, paddleEnd, py, px);
+        show(map, score);
 
-        busy_wait(500); // Slow down or speed up the game loop (measured in ms between updates)
+        busy_wait(500);
 
-        if (gol == 1) {
+        if (gameOver == 1) {
             break;
         }
     }
 
-    // Disable raw mode after game ends
     disable_raw_mode();
 }
 
-// Function to draw the game board
+// Clear and initialize game board
 void draw(char map[V][H], int score) {
-    int i, j;
-    clearScreen();
-    for (i = 0; i < V; i++) {
-        for (j = 0; j < H; j++) {
+    clear_screen();
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < H; j++) {
             map[i][j] = ' ';
         }
     }
 }
 
-// Function to display the game state
+// Display game state (paddle, ball, and score)
 void show(char map[V][H], int score) {
-    int i, j;
-    clearScreen();
-    gotoxy(0, 0); // Reset cursor position
-    printf(" --------------------------------------\n");   // Dispalys row of dashes above the score
+    clear_screen();
+    gotoxy(0, 0);
+    printf(" --------------------------------------\n");
     printf("  Score: %d\n", score);
-    for (i = 0; i < V; i++) {
-        for (j = 0; j < H; j++) {
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < H; j++) {
             printf("%c", map[i][j]);
         }
-	printf("\n");
+        printf("\n");
     }
 }
 
-// Function to pdate the game state (ball and paddle)
+// Update the game state (ball movement, paddle position)
 void update(char map[V][H], int paddleStart, int paddleEnd, int py, int px) {
     edge(map);
     player(map, paddleStart, paddleEnd);
     ball(map, px, py);
 }
 
-// Function to handle user input and ball movement
-void input(char map[V][H], int *paddleStart, int *paddleEnd, int *px, int *py, int *modx, int *mody, int *score, int *gol) {
-    // Check if the ball hits top or bottom edges
+// Handle ball movement, paddle interaction, and scoring
+void input(char map[V][H], int *paddleStart, int *paddleEnd, int *px, int *py, int *modx, int *mody, int *score, int *gameOver) {
     if (*py == 1 || *py == V - 2) {
         *mody *= -1;
     }
 
-    // Ball reaches the left wall (player loses)
+    // Player loses when the ball reaches the left wall
     if (*px == 1) {
-        *gol = 1;
-        playerwin = 0; // Player loses
+        *gameOver = 1;
+        playerwin = 0;
     }
 
-    // Ball hits the right wall (ball bounces back)
+    // Ball bounces off the right wall
     if (*px == H - 2) {
-        *modx *= -1; // Ball bounces off the right wall
+        *modx *= -1;
     }
 
-    // Ball collides with player paddle
-    if (*px == 4) {
-        if (*py >= *paddleStart && *py <= *paddleEnd) {
-            *modx *= -1; // Ball bounces back from player paddle
-            (*score)++;  // Increment player's score when they hit the ball
-        }
+    // Ball hits the paddle
+    if (*px == 4 && *py >= *paddleStart && *py <= *paddleEnd) {
+        *modx *= -1;
+        (*score)++;
     }
 
-    // Ball movement
-    if (*gol == 0) {
+    if (*gameOver == 0) {
         *px += (*modx);
         *py += (*mody);
     }
 
-    // Handle paddle movement using the arrow keys
     handleArrowKeys(paddleStart, paddleEnd);
 }
 
-// Function to draw the edges of the game board
+// Draw the edges of the game board
 void edge(char map[V][H]) {
     for (int i = 0; i < H; i++) {
-        map[0][i] = '-';  // Top border remains a hyphen
-        map[V - 1][i] = '_';  // Bottom border is now an underscore
+        map[0][i] = '-';
+        map[V - 1][i] = '_';
     }
     for (int i = 0; i < V; i++) {
         map[i][0] = '|';
@@ -184,66 +188,59 @@ void edge(char map[V][H]) {
     }
 }
 
-// Function to draw the player paddle
+// Draw the player paddle
 void player(char map[V][H], int paddleStart, int paddleEnd) {
     for (int i = paddleStart; i <= paddleEnd; i++) {
-        map[i][3] = '#'; // Player paddle
+        map[i][3] = '#';
     }
 }
 
-// Function to draw the ball
+// Draw the ball
 void ball(char map[V][H], int px, int py) {
-    map[py][px] = 'O'; // Ball
+    map[py][px] = 'O';
 }
 
-// Function to clear the screen
-void clearScreen() {
-    clear_screen();  // Call without sys_ prefix
-}
-
-// Simple busy-wait delay function
+// Busy-wait to delay game loop
 void busy_wait(int milliseconds) {
     volatile int i, j;
     for (i = 0; i < milliseconds * 1000; i++) {
-        for (j = 0; j < 100; j++) {
-            // Busy-wait to simulate delay
-        }
+        for (j = 0; j < 100; j++) {}
     }
 }
 
-// Direct implementation of getchar using read
+// Directly get a character from user input
 int getchar_direct() {
     char c;
-    read(0, &c, 1); // Read one character from stdin (fd 0)
+    read(0, &c, 1);
     return c;
 }
 
-// Check if a key is pressed (non-blocking input)
+// Check if a key is pressed
 int kbhit() {
-    int result = nonblock_read(); // Call without sys_ prefix
-    return result != 0; // Return true if there's input
+    int result = nonblock_read();
+    return result != 0;
 }
 
-// Handle the up and down arrow keys for paddle movement
+// Handle up and down arrow keys to move paddle
 void handleArrowKeys(int *paddleStart, int *paddleEnd) {
     if (kbhit()) {
         char key = getchar_direct();
-        if (key == '\033') { // First part of the escape sequence
-            getchar_direct();       // Skip the '[' part of the sequence
-            switch(getchar_direct()) { // Check the final part of the sequence
-                case 'A': // Up arrow key
+        if (key == '\033') {
+            getchar_direct();
+            switch(getchar_direct()) {
+                case 'A':
                     if (*paddleStart > 1) {
                         (*paddleStart)--;
                         (*paddleEnd)--;
                     }
                     break;
-                case 'B': // Down arrow key
+                case 'B':
                     if (*paddleEnd < V - 2) {
                         (*paddleStart)++;
                         (*paddleEnd)++;
                     }
                     break;
             }
-	}
+        }
     }
 }
